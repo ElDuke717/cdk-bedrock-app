@@ -25,45 +25,31 @@ export const handler = async (event: any): Promise<any> => {
      * This adjusting of the prompt is called "Prompt Engineering"
      * https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview
      */
-    const prompt = `You are an expert Kubernetes cluster analyst.
-Your task is to analyze and summarize the provided Kubernetes cluster metrics data.
+    const prompt = `You are a product development expert. Your task is to analyze the following product idea and provide insights on pricing, manufacturing, market viability, and potential improvements.
 
-Here's the data:
-${JSON.stringify(requestBody.inputData, null, 2)}
+Here's the product idea:
+${requestBody.inputData.prompt}
 
-Please provide a comprehensive summary of this data, including:
+Please provide a comprehensive analysis, including:
 
-1. Overview:
-   - Total number of clusters
-   - Total number of nodes across all clusters
-   - Total number of pods across all clusters
+1.  **Potential Price Points:** Suggest several target price points for this product, justifying each with considerations of material costs, manufacturing costs, perceived value, and competitor pricing.
 
-2. Cluster Analysis:
-   - For each cluster, provide:
-     a) Cluster name
-     b) Number of nodes
-     c) Number of pods
-     d) CPU usage percentage
-     e) Memory usage percentage
+2.  **Manufacturing Options:**
+    *   Identify potential manufacturing locations (domestic US and abroad) and co-manufacturers that could be approached.
+    *   Discuss the pros and cons of each location, considering factors like cost, quality control, and lead times.
+    *   Provide a list of specific co-manufacturers (if possible) with contact information or links to their websites.
 
-3. Resource Utilization:
-   - Identify the cluster with the highest CPU usage
-   - Identify the cluster with the highest memory usage
-   - Calculate and report the average CPU and memory usage across all clusters
+3.  **Market Viability:**
+    *   Assess the viability of the product idea. Is there a market for it?
+    *   Identify the target audience and their needs.
+    *   Analyze the competitive landscape. Are there similar products already on the market? What are their strengths and weaknesses?
 
-4. Scale and Performance:
-   - Rank the clusters from largest to smallest based on node count
-   - Analyze the relationship between node count and pod count
-   - Identify any clusters that might be under or over-utilized based on their metrics
+4.  **Product Improvements and Considerations:**
+    *   Suggest potential improvements or additions to the product to make it more relevant, useful, and compelling for consumers.
+    *   Consider factors like functionality, features, materials, design, and branding.
+    *   Identify any potential challenges or considerations that need to be addressed to ensure the product's success.
 
-5. Recommendations:
-   - Suggest any potential optimizations or areas of concern based on the data
-   - Identify which clusters might need scaling up or down
-
-6. Timestamp Analysis:
-   - Comment on the timestamp of the data and its relevance
-
-Please provide your analysis in a clear, structured format using markdown for better readability.`;
+Provide your analysis in a clear, structured format using markdown for better readability.`;
 
     /**
      * NOTE: Different models expect different parameteres for the InvokeModelCommand
@@ -81,9 +67,9 @@ Please provide your analysis in a clear, structured format using markdown for be
             content: prompt,
           },
         ],
-        max_tokens: 500, // response tokens (1 token = 4 characters)
-        temperature: 0.3, // from 0 (deterministic, focused responses) to 1 (random, creative responses)
-        top_p: 0.8, // probability distribution. from 0 (most common tokens) to 1 (least common tokens)
+        max_tokens: 1000, // Increased token limit for more detailed responses
+        temperature: 0.5, // Adjusted temperature for a balance of focus and creativity
+        top_p: 0.9, // Adjusted probability distribution
         top_k: 150, // the amount of tokens available for consideration at each step (from 1 to size model's entire vocab but common range is 10 to 200)
       }),
     });
@@ -91,38 +77,6 @@ Please provide your analysis in a clear, structured format using markdown for be
     const response = await bedrockClient.send(command);
     const responseBody = JSON.parse(new TextDecoder().decode(response.body));
     const responseBodyText = responseBody.content[0].text;
-
-    /** 
-     * NOTE: Here is some optional code to use Meta's Llama3 Foundation Model
-     * 
-     * const llama3StructuredPrompt = `
-      <|begin_of_text|>
-      <|start_header_id|>user<|end_header_id|>
-      Summarize the following data of kubernetes clusters: ${JSON.stringify(requestBody.inputData)}
-      <|eot_id|>
-      <|start_header_id|>assistant<|end_header_id|>
-    `;
-
-      const llama3Command = new InvokeModelCommand({
-        contentType: "application/json",
-        body: JSON.stringify({
-          prompt: llama3StructuredPrompt,
-          max_gen_len: 512,
-          temperature: 0.3,
-          top_p: 0.5,
-        }),
-        modelId: "meta.llama3-8b-instruct-v1:0",
-      })
-
-    const llama3Response = await bedrockClient.send(
-      llama3Command
-    );
-
-    const nativeResponse = JSON.parse(
-      new TextDecoder().decode(llama3Response.body)
-    );
-    const responseBodyText = nativeResponse.generation;
-    */
 
     return {
       statusCode: 200,
